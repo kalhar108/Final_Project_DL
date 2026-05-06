@@ -47,28 +47,31 @@ To solve this, ClaimLens reliably outputs:
 | Visualization, metrics, ablation studies, sweeps | 20% emphasis inside experiments |
 | Full production pipeline, CI/CD, monitoring, drift, automated retrain/deploy artifacts | Extra credit target |
 
-## Repository Deliverables
+## Detailed Repository Structure & File Descriptions
 
-| Deliverable | Location |
-|---|---|
-| Main report draft | `docs/report.md` |
-| Proposal | `docs/proposal.md` |
-| Team contribution document | `docs/team_contributions.md` |
-| Training pipeline | `src/claimlens/train.py` |
-| Inference pipeline | `src/claimlens/infer.py` |
-| Model architecture | `src/claimlens/model.py` |
-| Data preparation | `src/claimlens/data.py` |
-| Evaluation and ablations | `src/claimlens/evaluate.py` |
-| Drift monitoring | `src/claimlens/monitoring.py` |
-| Gradio application | `app/gradio_app.py` |
-| FastAPI service | `app/api.py` |
-| Pipeline entrypoint | `pipelines/run_pipeline.py` |
-| Tests | `tests/` |
-| CI workflow | `.github/workflows/ci.yml` |
-| Dockerfile | `Dockerfile` |
-| Experiment configuration | `configs/config.yaml` |
-| Results summary | `artifacts/reports/results_summary.md` |
-| Screenshot placeholders | `artifacts/screenshots/README.md` |
+### 📁 `src/claimlens/` - Core Machine Learning Source Code
+- **`data.py`**: Manages the data ingestion pipeline. It reads raw JSONL files, performs deduplication using SHA-256 cryptographic hashing to avoid data leakage, and systematically partitions the corpus into `train`, `valid`, and `test` sets for rigorous model evaluation.
+- **`model.py`**: Contains the PyTorch neural network architecture (`ClaimLensModel`). It leverages `sentence-transformers` (e.g., `all-MiniLM-L6-v2`) to generate dense contextual embeddings of both the question and the retrieved evidence, passing them through a multi-layer perceptron (MLP) with dropout regularization to output a 3-way support classification.
+- **`retrieval.py`**: Implements the retrieval heuristic (`TfidfRetriever`). It indexes the document passages and uses TF-IDF vectorization combined with nearest-neighbors search to efficiently extract the top-K most relevant passages for any given query.
+- **`train.py`**: The training loop orchestrator. It manages the PyTorch dataloaders, computes the cross-entropy loss, applies the AdamW optimizer with weight decay, tracks training/validation metrics per epoch, and handles optimal model checkpointing.
+- **`evaluate.py`**: Evaluates the trained model on hold-out test sets. It computes extensive evaluation metrics including Answerability F1, Evidence Recall, Support Macro-F1, and Calibration Error. It also sequentially executes ablation configurations (e.g., removing cross-attention) defined in the config file to validate architecture decisions.
+- **`infer.py`**: Wraps the trained model and retriever into a cohesive, production-ready `ClaimLensPipeline` class. This provides a clean interface (`pipe.predict()`) used by the API and frontend to generate end-to-end answers in real-time.
+- **`monitoring.py`**: Includes essential hooks for production MLOps. It tracks data distributions, inference latency percentiles (p95), and input drift scores, exposing these critical metrics for Prometheus scraping.
+- **`utils.py`**: A comprehensive collection of robust helper functions for setting global random seeds (to ensure absolute reproducibility), and safely parsing/writing JSONL and YAML files.
+
+### 📁 `app/` - User Interfaces & APIs
+- **`gradio_app.py`**: The primary user touchpoint. A rich, interactive web application built with Gradio Blocks. It allows users to input custom questions and documents, returning a sleek dashboard containing the generated answer, a color-coded support label, a confidence score, and cleanly formatted markdown evidence.
+- **`api.py`**: A highly-scalable FastAPI service that wraps the inference pipeline. It exposes REST endpoints (`/predict`) for programmatic access, enabling seamless integration into larger microservice architectures and handling concurrent requests efficiently.
+
+### 📁 `pipelines/` & `configs/` - Orchestration
+- **`run_pipeline.py`**: A centralized workflow entrypoint script that sequentially triggers data preparation, training, and evaluation in one single automated command.
+- **`config.yaml`**: The single source of truth for all experiment configurations. It defines model hyperparameters (batch size, learning rate), directory paths, model architecture dimensions, and explicit definitions for the ablation studies.
+
+### 📁 Infrastructure, Tests, & Documentation
+- **`Dockerfile`**: Containerization instructions to securely package the FastAPI and Gradio applications along with all underlying dependencies into a perfectly reproducible Docker image.
+- **`.github/workflows/ci.yml`**: Continuous Integration (CI) pipeline instructions for GitHub Actions. It runs automated syntax checks and smoke tests on every push to guarantee absolute code stability.
+- **`tests/test_smoke.py`**: Automated unit and integration tests to verify the pipeline's core functionality before deployment.
+- **`docs/report.md` & `docs/proposal.md`**: The comprehensive academic report and initial project proposal extensively outlining the methodologies, related work, experimental setup, and analytical findings.
 
 ## Input and Output
 
