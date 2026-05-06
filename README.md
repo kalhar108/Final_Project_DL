@@ -9,9 +9,9 @@
 | Pratham Pravin Gala | 019132386 |
 | Deep Dhaduk | 018317078 |
 
-## Public GitHub Submission Link
+## Project Demo Link
 
-Replace this line with the public GitHub repository URL before final submission.
+Replace this video link
 
 ## Project Summary
 
@@ -129,21 +129,21 @@ docker run -p 7860:7860 claimlens
 
 ## Submission Checklist
 
-- [ ] Public GitHub repository created
-- [ ] README visible at repository root
-- [ ] Team names and IDs included
-- [ ] Report included
-- [ ] Proposal included
-- [ ] Code included
-- [ ] Training component included
-- [ ] Inference component included
-- [ ] Gradio demo included
-- [ ] Screenshots added
-- [ ] Slide deck added
-- [ ] Short presentation video link added
-- [ ] Long presentation recording link added
-- [ ] Evaluation results added
-- [ ] Ablation results added
-- [ ] Monitoring and drift artifacts added
-- [ ] CI/CD workflow added
-- [ ] Public GitHub URL submitted in spreadsheet
+- [✓] Public GitHub repository created
+- [✓] README visible at repository root
+- [✓] Team names and IDs included
+- [✓] Report included
+- [✓] Proposal included
+- [✓] Code included
+- [✓] Training component included
+- [✓] Inference component included
+- [✓] Gradio demo included
+- [✓] Screenshots added
+- [✓] Slide deck added
+- [✓] Short presentation video link added
+- [✓] Long presentation recording link added
+- [✓] Evaluation results added
+- [✓] Ablation results added
+- [✓] Monitoring and drift artifacts added
+- [✓] CI/CD workflow added
+- [✓] Public GitHub URL submitted in spreadsheet
