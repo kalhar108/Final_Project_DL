@@ -1,0 +1,30 @@
+seed: 258
+project_name: ClaimLens
+paths:
+  raw_data: data/raw/claimlens_seed.jsonl
+  processed_dir: data/processed
+  artifacts_dir: artifacts
+  model_dir: models/claimlens
+model:
+  encoder_name: sentence-transformers/all-MiniLM-L6-v2
+  hidden_dim: 256
+  dropout: 0.15
+  num_support_labels: 3
+training:
+  batch_size: 8
+  epochs: 3
+  learning_rate: 0.00003
+  weight_decay: 0.01
+  validation_split: 0.2
+retrieval:
+  top_k: 5
+  chunk_words: 120
+experiments:
+  ablations:
+    - name: no_cross_attention
+    - name: no_calibration
+    - name: top_k_3
+    - name: top_k_8
+deployment:
+  latency_budget_ms: 900
+  drift_threshold: 0.18
