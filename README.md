@@ -73,6 +73,26 @@ To solve this, ClaimLens reliably outputs:
 - **`tests/test_smoke.py`**: Automated unit and integration tests to verify the pipeline's core functionality before deployment.
 - **`docs/report.md` & `docs/proposal.md`**: The comprehensive academic report and initial project proposal extensively outlining the methodologies, related work, experimental setup, and analytical findings.
 
+## Dataset & Methodology
+
+### Data Sourcing and Preparation
+The performance of any claim verification system is heavily bounded by the quality of its underlying dataset. For ClaimLens, we prioritized high-fidelity text that closely mimics real-world policy, academic, and technical documents. 
+- **Cryptographic Deduplication:** We compute SHA-256 hashes for every combination of `question` and `context`. Any colliding hashes are strictly dropped from the corpus, guaranteeing that no identical passages leak between the train and test sets.
+- **Stratified Splitting:** The final dataset is carefully split into `train` (80%), `valid` (10%), and `test` (10%) partitions. We apply class-aware stratification to ensure that the distribution of our three target labels (`Supported`, `Partially Supported`, and `Not Supported`) remains perfectly consistent across all three splits, preventing catastrophic forgetting of minority classes during gradient descent.
+
+### Model Architecture and Optimization Strategy
+Rather than training a monolithic Large Language Model (LLM) from scratch, ClaimLens employs a highly optimized, parameter-efficient pipeline designed for low-latency production environments:
+- **Dual-Encoder Strategy:** We utilize lightweight `sentence-transformers` models (specifically `all-MiniLM-L6-v2`) which map sentences to a 384-dimensional dense vector space. This allows our system to capture deep semantic similarity far better than traditional bag-of-words or standard BM25 approaches.
+- **Multi-Layer Perceptron (MLP) Classifier:** The dense embeddings for the user's question and the highest-ranked retrieved evidence are concatenated and passed through a custom PyTorch Multi-Layer Perceptron. This classifier uses a hidden dimension of `256` with a Dropout probability of `p=0.15` to heavily penalize over-reliance on specific features and prevent overfitting.
+- **AdamW Optimization:** We train the MLP using the AdamW optimizer with a conservative learning rate of `3e-5` and a weight decay of `0.01`. This decoupled weight decay setup aggressively penalizes large weights, ensuring the model generalizes well to entirely unseen out-of-distribution documents.
+
+## Ablation Studies Setup
+
+To rigorously prove the necessity of each component in our architecture, we defined systematic ablation studies executed automatically via our `evaluate.py` script:
+1. **`no_cross_attention`:** Tests the system's performance if we completely remove the interaction layer between the question embedding and the evidence embedding. **Hypothesis:** Support Macro-F1 will drop significantly because the model cannot properly contextualize the evidence against the specific constraints of the question.
+2. **`no_calibration`:** Removes the temperature-scaling calibration step applied to the final Softmax logits. **Hypothesis:** Core accuracy remains unchanged, but Calibration Error spikes, meaning the model's reported confidence scores become mathematically untrustworthy for downstream decision-making.
+3. **`top_k_3` vs `top_k_8`:** Adjusts the number of passages retrieved by the TF-IDF module. **Hypothesis:** A lower K increases system throughput/speed but drops Evidence Recall, while a higher K improves Recall but introduces noisy text that may confuse the MLP classifier and degrade the Support Macro-F1 score.
+
 ## Input and Output
 
 **Input:** a user question and a collection of document passages.
