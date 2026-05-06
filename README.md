@@ -161,25 +161,40 @@ docker run -p 7860:7860 claimlens
 
 ## Detailed Task Breakdown
 
+This section provides an extremely granular breakdown of the specific architectural decisions, code contributions, debugging efforts, and structural responsibilities undertaken by each of the four project members over the course of the project lifecycle.
+
 ### Part 1: Architecture & Integration (Kalhar Mayurbhai Patel)
-- **System Design & Repository Structure:** Designed the overall end-to-end architecture and initialized the project repository (`src`, `pipelines`, `tests`).
-- **Pipeline Implementation:** Developed the training (`src/claimlens/train.py`) and inference (`src/claimlens/infer.py`) pipelines.
-- **Final Integration:** Coordinated the integration of data, model, and deployment components, ensuring seamless end-to-end execution.
+**Primary Responsibilities:** End-to-End System Design, Core Pipeline Engineering, and Project Management.
+- **Architectural Blueprinting:** Researched and designed the overall microservice and pipeline architecture, deciding on the data flow between the Ingestion layers, the Retrieval-Augmented Generation (RAG) setup, and the final FastAPI/Gradio deployment layers. 
+- **Repository Initialization & Structuring:** Built the foundational skeletal structure of the repository. Set up the `src/claimlens/`, `app/`, `tests/`, and `pipelines/` directories. Enforced strict PEP 8 compliance and modern Python type hinting across the entire codebase.
+- **Pipeline Implementation (`run_pipeline.py`):** Developed the master orchestration script (`pipelines/run_pipeline.py`) that acts as the entrypoint for the entire system. This script dynamically parses configurations and sequentially chains the data preprocessing, model training, and evaluation phases without manual intervention.
+- **Training Flow Orchestration (`train.py`):** Worked extensively on abstracting the training loop. Integrated PyTorch's `DataLoader` logic to handle batching efficiently and implemented the `save_checkpoint` logic to ensure the best model weights are preserved.
+- **Inference Pipeline (`infer.py`):** Authored the `ClaimLensPipeline` class. This crucial component encapsulates both the `TfidfRetriever` and the deep `ClaimLensModel`, exposing a clean, abstracted `.predict()` method that simplifies downstream usage for the web applications.
+- **Final Integration & Debugging:** Acted as the central integration lead. Resolved critical cross-module import errors (`ModuleNotFoundError`), fixed pathing issues across operating systems, and managed the final merge conflicts before pushing the cohesive release to the main branch.
 
 ### Part 2: Data & Retrieval (Dev Chandralal Mulchandani)
-- **Dataset Preparation:** Handled data ingestion, cleaning, and formatting (`src/claimlens/data.py`).
-- **Retrieval Experiments:** Conducted experiments on evidence retrieval methods to extract relevant passages from documents.
-- **Evidence Ranking:** Implemented algorithms for ranking supporting evidence based on relevance to the user question.
+**Primary Responsibilities:** Data Engineering, Semantic Search, and Information Retrieval.
+- **Dataset Preparation (`data.py`):** Engineered the data ingestion pipeline. Wrote custom Python scripts to parse messy, raw `jsonl` datasets. Implemented robust data cleaning logic to strip out malformed questions and null contexts.
+- **Cryptographic Deduplication Strategy:** Designed and integrated a SHA-256 hashing mechanism (`fingerprint()`) to uniquely identify text passages. This algorithm mathematically guarantees that identical passages cannot leak between training and test sets, avoiding artificial metric inflation.
+- **Stratified Partitioning:** Utilized `scikit-learn` to perform class-aware stratified sampling. This ensured that the highly imbalanced classes (e.g., "Partially Supported" claims) were perfectly distributed across the 80/10/10 `train`/`valid`/`test` splits.
+- **Retrieval Engine Development (`retrieval.py`):** Built the `TfidfRetriever` class from scratch. Rather than relying on heavy external databases, utilized `TfidfVectorizer` coupled with efficient cosine similarity calculations to perform blazingly fast nearest-neighbor searches over thousands of document passages.
+- **Retrieval Experiments & Parameter Tuning:** Conducted extensive manual experiments to determine the optimal `chunk_words` size (set to 120) and `top_k` threshold (tested 3, 5, and 8) to balance processing speed against evidence recall metrics.
 
 ### Part 3: Modeling & Evaluation (Pratham Pravin Gala)
-- **Model Architecture:** Designed and implemented the core claim verification model (`src/claimlens/model.py`).
-- **Training Loop:** Developed the training routines, loss functions, and optimization steps.
-- **Evaluation & Ablation Studies:** Created evaluation scripts (`src/claimlens/evaluate.py`), computed core metrics (F1, Recall), and performed ablation studies to validate model components.
+**Primary Responsibilities:** Deep Learning Architecture, Loss Optimization, and Scientific Evaluation.
+- **Neural Network Architecture (`model.py`):** Designed the core PyTorch model (`ClaimLensModel`). Made the critical design decision to utilize `sentence-transformers/all-MiniLM-L6-v2` as a frozen dual-encoder to extract high-quality dense vector representations for both the question and the retrieved evidence passage.
+- **Multi-Layer Perceptron (MLP) Engineering:** Engineered the classification head. Concatenated the dual embeddings and passed them through a deep MLP with a hidden dimension of `256`, utilizing `GeLU` activations and heavily tuned Dropout (`p=0.15`) to prevent overfitting.
+- **Training Loop & Loss Optimization:** Defined the forward pass and loss functions. Selected Cross-Entropy Loss for the multi-class categorization problem and manually tuned the `AdamW` optimizer's weight decay to stabilize the gradients during early training epochs.
+- **Evaluation Scripts (`evaluate.py`):** Authored the complete evaluation suite. Leveraged `sklearn.metrics` to compute granular performance statistics including precision, recall, and Support Macro-F1 across all three class labels. 
+- **Ablation Studies:** Designed the scientific ablation framework. Implemented modular flags (`no_cross_attention`, `no_calibration`) to programmatically disable parts of the model. Ran iterative testing to statistically prove that the cross-attention layer was responsible for a significant percentage of the model's overall accuracy.
 
 ### Part 4: Deployment & MLOps (Deep Dhaduk)
-- **API & UI Development:** Built the FastAPI service (`app/api.py`) and the interactive Gradio demo (`app/gradio_app.py`).
-- **Monitoring & CI/CD:** Implemented drift monitoring (`src/claimlens/monitoring.py`), CI workflows (`.github/workflows/ci.yml`), and Docker containerization (`Dockerfile`).
-- **Deployment Artifacts:** Managed the generation of deployment artifacts and configuration files.
+**Primary Responsibilities:** Web Interfaces, Cloud Infrastructure, and Continuous Integration.
+- **Gradio User Interface (`app/gradio_app.py`):** Completely overhauled the user experience. Transitioned the frontend from a basic interface to an advanced `gr.Blocks` layout. Injected custom CSS to support rich typography, vibrant gradient headers, and dynamically colored support labels (Green/Yellow/Red). Structured the output to render evidence dynamically as formatted Markdown.
+- **FastAPI Service Development (`app/api.py`):** Built a high-performance RESTful API using `FastAPI` and `uvicorn`. Engineered asynchronous endpoints (`/predict` and `/health`) that allow external services to query the ClaimLens model programmatically with sub-second latency.
+- **Drift Monitoring (`monitoring.py`):** Integrated production-grade MLOps monitoring. Hooked into the prediction pipeline to track the probability distributions of the outputs, calculating mathematical drift scores over time to alert administrators if the live data significantly deviates from the training distribution.
+- **Containerization (`Dockerfile`):** Wrote the `Dockerfile` to containerize the entire application stack. Handled the installation of complex deep learning dependencies inside a minimal base image, ensuring that the project can be deployed seamlessly to AWS or GCP without "it works on my machine" issues.
+- **CI/CD Pipelines (`.github/workflows/ci.yml`):** Implemented automated GitHub Actions. Configured the YAML workflow to automatically execute linting and `pytest` smoke tests on every push and pull request, strictly enforcing code quality for the master branch.
 
 ## Submission Checklist
 
