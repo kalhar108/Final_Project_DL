@@ -1,0 +1,10 @@
+{
+  "train": 6,
+  "valid": 1,
+  "test": 1,
+  "labels": {
+    "0": "Supported",
+    "1": "Partially Supported",
+    "2": "Not Supported"
+  }
+}

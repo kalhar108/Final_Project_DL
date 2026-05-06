@@ -1,0 +1,22 @@
+[
+  {
+    "name": "base",
+    "macro_f1": 0.0
+  },
+  {
+    "name": "top_k_3",
+    "macro_f1": 0.78
+  },
+  {
+    "name": "top_k_8",
+    "macro_f1": 0.81
+  },
+  {
+    "name": "no_calibration",
+    "macro_f1": 0.74
+  },
+  {
+    "name": "no_cross_attention",
+    "macro_f1": 0.69
+  }
+]
