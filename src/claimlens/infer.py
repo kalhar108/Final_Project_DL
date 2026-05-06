@@ -25,8 +25,7 @@ class ClaimLensPipeline:
     def _enc(self, text):
         return torch.tensor(self.encoder.encode([text], normalize_embeddings=True), dtype=torch.float32)
     def predict(self, question:str, passages:str=''):
-        corpus=[p.strip() for p in passages.split('
-') if p.strip()] if passages.strip() else [r['context'] for r in self.rows]
+        corpus=[p.strip() for p in passages.split('\n') if p.strip()] if passages.strip() else [r['context'] for r in self.rows]
         self.retriever.fit(corpus or ['No passage supplied'])
         evidence=self.retriever.search(question, k=self.cfg['retrieval']['top_k'])
         top=evidence[0]['passage'] if evidence else ''

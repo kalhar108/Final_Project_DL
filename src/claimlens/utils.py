@@ -15,8 +15,7 @@ def read_jsonl(path:str|Path):
 def write_jsonl(path:str|Path, rows)->None:
     p=Path(path); p.parent.mkdir(parents=True, exist_ok=True)
     with p.open('w') as f:
-        for row in rows: f.write(json.dumps(row)+"
-")
+        for row in rows: f.write(json.dumps(row)+"\n")
 
 def load_yaml(path:str|Path):
     import yaml
