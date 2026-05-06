@@ -86,6 +86,7 @@ The system solves a practical problem: users often need answers from long policy
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+pip install -e .
 python -m claimlens.data --config configs/config.yaml
 python -m claimlens.train --config configs/config.yaml
 python -m claimlens.evaluate --config configs/config.yaml
