@@ -52,7 +52,7 @@ body {
 }
 """
 
-with gr.Blocks(theme=gr.themes.Soft(primary_hue="blue", secondary_hue="slate"), css=custom_css) as demo:
+with gr.Blocks() as demo:
     gr.HTML("""
     <div class="header-container">
         <h1>🔍 ClaimLens</h1>
@@ -94,4 +94,4 @@ with gr.Blocks(theme=gr.themes.Soft(primary_hue="blue", secondary_hue="slate"), 
     )
 
 if __name__ == '__main__': 
-    demo.launch(server_name='0.0.0.0', server_port=7860)
+    demo.launch(server_name='0.0.0.0', server_port=7860, theme=gr.themes.Soft(primary_hue="blue", secondary_hue="slate"), css=custom_css)
