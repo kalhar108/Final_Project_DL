@@ -15,15 +15,23 @@ Replace this video link
 
 ## Project Summary
 
-ClaimLens is an end-to-end system that answers a user question from a supplied document collection and verifies whether the answer is supported by evidence. The project includes data preparation, model training, evaluation, ablation studies, model packaging, a Gradio demo, a FastAPI inference service, monitoring hooks, and CI checks.
+ClaimLens is a robust, end-to-end Machine Learning system designed to answer complex user questions from a supplied collection of documents while simultaneously verifying whether the extracted answer is grounded in factual evidence. By synthesizing Information Retrieval (IR) and Natural Language Processing (NLP) techniques, ClaimLens ensures high-fidelity claim verification. The project encompasses the entire ML lifecycle: data preparation, deep neural network training, rigorous evaluation, ablation studies, model packaging, a rich Gradio user interface, a highly-available FastAPI inference service, production monitoring hooks, and Continuous Integration (CI) workflows.
 
-The system solves a practical problem: users often need answers from long policy, academic, or technical documents, but those answers must be tied to specific supporting passages. ClaimLens returns:
+The system addresses a critical challenge in modern AI: hallucination and unverified generation. Users often require answers from lengthy, dense materials—such as policy documents, academic journals, or technical manuals—but need the assurance that these answers are intrinsically tied to specific, verifiable supporting passages. 
 
-1. the answer,
-2. the supporting evidence passages,
-3. a support score,
-4. a decision label: Supported, Partially Supported, or Not Supported,
-5. model and pipeline metadata for reproducibility.
+To solve this, ClaimLens reliably outputs:
+1. **The Final Answer:** A concise response to the user's inquiry.
+2. **Supporting Evidence Passages:** The exact sentences or paragraphs extracted from the source documents that back up the claim.
+3. **Support Confidence Score:** A calibrated probability score reflecting the model's certainty.
+4. **Decision Label:** A categorical classification indicating whether the claim is *Supported*, *Partially Supported*, or *Not Supported*.
+5. **Traceability Metadata:** Extensive model and pipeline metadata ensuring full experiment reproducibility and auditability.
+
+### System Architecture & Pipeline Flow
+- **Data Ingestion & Preprocessing (`src/claimlens/data.py`):** Handles raw JSONL datasets, deduplicates passages via cryptographic hashing, and splits data cleanly into train/valid/test sets.
+- **Evidence Retrieval (`src/claimlens/retrieval.py`):** Uses optimized TF-IDF heuristics combined with semantic search to isolate the `top_k` most relevant passages from the corpus.
+- **Deep Verification Model (`src/claimlens/model.py`):** A custom neural architecture that employs `sentence-transformers` (e.g., `all-MiniLM-L6-v2`) to encode questions and evidence, followed by dense hidden layers with dropout to classify the support label.
+- **Evaluation & Ablation (`src/claimlens/evaluate.py`):** Computes robust metrics such as Macro-F1, Precision, and Recall. Ablation scripts strip away components (like cross-attention or calibration) to quantify their impact on the baseline metrics.
+- **Deployment & MLOps (`src/claimlens/monitoring.py`, `app/`):** The model is wrapped in a scalable FastAPI backend and monitored by Prometheus for data drift. A responsive Gradio frontend serves as the primary user touchpoint. Docker guarantees environment consistency across deployments.
 
 ## Rubric Weightage
 
